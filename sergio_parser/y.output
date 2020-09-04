@@ -1,0 +1,207 @@
+
+state 0
+	$accept: .Input $end 
+	Input: .    (1)
+
+	.  reduce 1 (src line 54)
+
+	Input  goto 1
+
+state 1
+	$accept:  Input.$end 
+	Input:  Input.Accion 
+
+	$end  accept
+	MKDISK  shift 3
+	RMDISK  shift 4
+	.  error
+
+	Accion  goto 2
+
+state 2
+	Input:  Input Accion.    (2)
+
+	.  reduce 2 (src line 55)
+
+
+state 3
+	Accion:  MKDISK.Parameter 
+
+	'-'  shift 7
+	.  error
+
+	Atributos  goto 6
+	Parameter  goto 5
+
+state 4
+	Accion:  RMDISK.Parameter 
+
+	'-'  shift 7
+	.  error
+
+	Atributos  goto 6
+	Parameter  goto 8
+
+state 5
+	Accion:  MKDISK Parameter.    (3)
+	Parameter:  Parameter.Atributos 
+
+	'-'  shift 7
+	.  reduce 3 (src line 58)
+
+	Atributos  goto 9
+
+state 6
+	Parameter:  Atributos.    (6)
+
+	.  reduce 6 (src line 64)
+
+
+state 7
+	Atributos:  '-'.SIZE '-' '>' DIGIT 
+	Atributos:  '-'.PATH '-' '>' DIR 
+	Atributos:  '-'.NAME '-' '>' ARCHIVO 
+	Atributos:  '-'.UNIT '-' '>' IDENT 
+
+	PATH  shift 11
+	SIZE  shift 10
+	NAME  shift 12
+	UNIT  shift 13
+	.  error
+
+
+state 8
+	Accion:  RMDISK Parameter.    (4)
+	Parameter:  Parameter.Atributos 
+
+	'-'  shift 7
+	.  reduce 4 (src line 59)
+
+	Atributos  goto 9
+
+state 9
+	Parameter:  Parameter Atributos.    (5)
+
+	.  reduce 5 (src line 63)
+
+
+state 10
+	Atributos:  '-' SIZE.'-' '>' DIGIT 
+
+	'-'  shift 14
+	.  error
+
+
+state 11
+	Atributos:  '-' PATH.'-' '>' DIR 
+
+	'-'  shift 15
+	.  error
+
+
+state 12
+	Atributos:  '-' NAME.'-' '>' ARCHIVO 
+
+	'-'  shift 16
+	.  error
+
+
+state 13
+	Atributos:  '-' UNIT.'-' '>' IDENT 
+
+	'-'  shift 17
+	.  error
+
+
+state 14
+	Atributos:  '-' SIZE '-'.'>' DIGIT 
+
+	'>'  shift 18
+	.  error
+
+
+state 15
+	Atributos:  '-' PATH '-'.'>' DIR 
+
+	'>'  shift 19
+	.  error
+
+
+state 16
+	Atributos:  '-' NAME '-'.'>' ARCHIVO 
+
+	'>'  shift 20
+	.  error
+
+
+state 17
+	Atributos:  '-' UNIT '-'.'>' IDENT 
+
+	'>'  shift 21
+	.  error
+
+
+state 18
+	Atributos:  '-' SIZE '-' '>'.DIGIT 
+
+	DIGIT  shift 22
+	.  error
+
+
+state 19
+	Atributos:  '-' PATH '-' '>'.DIR 
+
+	DIR  shift 23
+	.  error
+
+
+state 20
+	Atributos:  '-' NAME '-' '>'.ARCHIVO 
+
+	ARCHIVO  shift 24
+	.  error
+
+
+state 21
+	Atributos:  '-' UNIT '-' '>'.IDENT 
+
+	IDENT  shift 25
+	.  error
+
+
+state 22
+	Atributos:  '-' SIZE '-' '>' DIGIT.    (7)
+
+	.  reduce 7 (src line 68)
+
+
+state 23
+	Atributos:  '-' PATH '-' '>' DIR.    (8)
+
+	.  reduce 8 (src line 69)
+
+
+state 24
+	Atributos:  '-' NAME '-' '>' ARCHIVO.    (9)
+
+	.  reduce 9 (src line 70)
+
+
+state 25
+	Atributos:  '-' UNIT '-' '>' IDENT.    (10)
+
+	.  reduce 10 (src line 71)
+
+
+21 terminals, 5 nonterminals
+11 grammar rules, 26/8000 states
+0 shift/reduce, 0 reduce/reduce conflicts reported
+54 working sets used
+memory: parser 6/120000
+0 extra closures
+22 shift entries, 1 exceptions
+7 goto entries
+1 entries saved by goto default
+Optimizer space used: output 27/120000
+27 table entries, 1 zero
+maximum spread: 21, maximum offset: 21
