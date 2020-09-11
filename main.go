@@ -2,7 +2,7 @@ package main
 
 //import "proyecto1_MIA/sergio_parser"
 import (
-	//*"proyecto1_MIA/sergio_parser"
+	"proyecto1_MIA/sergio_parser"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -10,9 +10,16 @@ import (
 	"os"
 	"unsafe"
     "time" 
-    "math/rand"
+	"math/rand"
+	"bufio"
 )
+type Ebr struct{
+	Ebr_Start uint64
+	Ebr_Size uint64
+	Ebr_Next uint64
+	Ebr_Name [16]byte
 
+}
 // Struct particion
 type partition struct { //3
 	Status byte
@@ -22,6 +29,19 @@ type partition struct { //3
 	Size uint64
 	Name [16] byte
 }
+type MasterBootRecord struct{
+	Mbr_Tamanio uint64
+	Mbr_fecha [21]byte
+	Mbr_IdDisk uint64
+	Mbr_Particiones[4] partition
+
+}
+type MountParticion struct{
+	Mountp_Name [50]byte
+	Mountp_Id [6]byte
+}
+
+
 var signatures [100]uint8
 // Struct MBR
 type mbr struct { 
@@ -56,13 +76,23 @@ return m
 }
 
 func main() {
-//	sergio_parser.Execute()
+	sergio_parser.Execute()
 	createDisk()
 	mbr := readFile("disco.bin")
 	fmt.Println("tamanio de la particion es =>", mbr.Part1.Size)
 	fmt.Println("tamanio de la particion es =>", mbr.Part2.Size)
 	fmt.Println("tamanio de la particion es =>", mbr.Part3.Size)
 	fmt.Println("tamanio de la particion es =>", mbr.Part4.Size)
+	
+// Realizar pausa
+	fmt.Println("Estamos en Pausa ...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+
+	err := os.Remove("disco.bin")
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	//mbrReport(mbr)
 }
 
@@ -94,14 +124,31 @@ return char
 }
 
 func createDisk(){
+
+
+
 	file, err := os.Create("disco.bin")
 	defer file.Close()
 	if err != nil{
 		log.Fatal(err)
 	}
-	x := int64(5242880)
+    x := int64(5242880)
 	mbr := createMBR(uint64(x))
 	s := &mbr
+
+
+	_,err = file.Seek(x-1, 0)
+	if err != nil {
+	log.Fatal("failed to seek")
+	}
+	_,err = file.Write([]byte {0})
+	if err != nil {
+	log.Fatal("Write filed")
+	}
+	file.Seek(0, 0) 
+	
+
+	
 	var binario2 bytes.Buffer
 	binary.Write(&binario2, binary.BigEndian, s)
 	writeNextBytes(file, binario2.Bytes())
@@ -111,6 +158,13 @@ func createDisk(){
 	file.Seek(x, int(unsafe.Sizeof(mbr)))
 	binary.Write(&binario, binary.BigEndian, n)
 	writeNextBytes(file, binario.Bytes())
+
+
+
+
+
+
+
 }
 
 
@@ -125,6 +179,9 @@ func writeNextBytes(file *os.File, bytes []byte) {
 }
 
 func createMBR(x uint64) mbr{
+
+
+
 	mbr:=mbr{}
 	mbr.Size = x //size disco
 	var c [21]byte

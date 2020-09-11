@@ -3,22 +3,71 @@
 //line parser.y:2
 package sergio_parser
 
-import __yyfmt__ "fmt"
-
-//line parser.y:2
+import __yyfmt__ "fmt" //line parser.y:2
 
 import (
 	"bufio"
 	"bytes"
+	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
+	"math/rand"
 	"os"
+	"strconv"
+	"time"
+	"unsafe"
 )
 
 type node struct {
 	name     string
 	children []node
 }
+
+type Ebr struct {
+	Ebr_Start uint64
+	Ebr_Size  uint64
+	Ebr_Next  uint64
+	Ebr_Name  [16]byte
+}
+
+// Struct particion
+type partition struct { //3
+	Status   byte
+	PartType byte
+	Fit      byte
+	Start    uint64
+	Size     uint64
+	Name     [16]byte
+}
+type MasterBootRecord struct {
+	Mbr_Tamanio     uint64
+	Mbr_fecha       [21]byte
+	Mbr_IdDisk      uint64
+	Mbr_Particiones [4]partition
+}
+type MountParticion struct {
+	Mountp_Name [50]byte
+	Mountp_Id   [6]byte
+}
+
+var signatures [100]uint8
+
+// Struct MBR
+type mbr struct {
+	Size          uint64
+	Date          [21]byte
+	DiskSignature uint8
+	Part1         partition
+	Part2         partition
+	Part3         partition
+	Part4         partition
+}
+
+var size_ string
+var path_ string
+var name_ string
+var unit_ string
 
 func (n node) String() string {
 	buf := new(bytes.Buffer)
@@ -41,7 +90,7 @@ func Pruebas() string {
 	return s
 }
 
-//line parser.y:40
+//line parser.y:101
 type yySymType struct {
 	yys   int
 	node  node
@@ -94,7 +143,7 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:81
+//line parser.y:142
 
 func Execute() {
 	fi := bufio.NewReader(os.NewFile(0, "stdin"))
@@ -121,6 +170,165 @@ func readline(fi *bufio.Reader) (string, bool) {
 		return "", false
 	}
 	return s, true
+}
+
+func readFile(archivo string) mbr {
+	file, err := os.Open(archivo)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+	m := mbr{}
+	var size int = int(unsafe.Sizeof(m))
+	fmt.Println("tamanio de mbr ", size)
+	data := readNextBytes(file, size)
+	fmt.Println("imprimo data", data)
+	buffer := bytes.NewBuffer(data)
+	err = binary.Read(buffer, binary.BigEndian, &m)
+	if err != nil {
+		log.Fatal("binary.Read failed", err)
+	}
+	return m
+
+}
+
+func randomNum() uint8 {
+	rand.Seed(time.Now().UnixNano())
+	x := rand.Intn(255)
+	c := uint8(x)
+	flag := false
+	for i := 0; i < len(signatures); i++ {
+		if c == signatures[i] {
+			flag = true
+		}
+	}
+	if flag {
+		randomNum()
+	}
+	return c
+}
+
+func getDate() [21]byte { //devuelvo en byte la fecha de una vez
+	var char [21]byte
+	t := time.Now()
+	fecha := fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%02d",
+		t.Year(), t.Month(), t.Day(),
+		t.Hour(), t.Minute(), t.Second())
+	fmt.Println("fecha creada  es =>", fecha)
+	copy(char[:], fecha)
+	return char
+}
+
+func createDisk(size_ string, path_ string, name_ string, unit_ string) {
+
+	numero_size, error := strconv.Atoi(size_)
+	if error != nil {
+		fmt.Println("Error al convervir string a int ", error)
+	}
+
+	file, err := os.Create(name_)
+	defer file.Close()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	x := int64(numero_size * 1024)
+	if unit_ == "k" {
+		x = int64(numero_size * 1024)
+	} else if unit_ == "m" {
+		x = int64(numero_size * 1024 * 1024)
+	}
+
+	mbr := createMBR(uint64(x))
+	s := &mbr
+	_, err = file.Seek(x-1, 0)
+	if err != nil {
+		log.Fatal("failed to seek")
+	}
+	_, err = file.Write([]byte{0})
+	if err != nil {
+		log.Fatal("Write filed")
+	}
+	file.Seek(0, 0)
+
+	var binario2 bytes.Buffer
+	binary.Write(&binario2, binary.BigEndian, s)
+	writeNextBytes(file, binario2.Bytes())
+
+	var binario bytes.Buffer
+	var n uint8
+	file.Seek(x, int(unsafe.Sizeof(mbr)))
+	binary.Write(&binario, binary.BigEndian, n)
+	writeNextBytes(file, binario.Bytes())
+
+}
+
+func writeNextBytes(file *os.File, bytes []byte) {
+
+	_, err := file.Write(bytes)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+}
+
+func createMBR(x uint64) mbr {
+
+	mbr := mbr{}
+	mbr.Size = x //size disco
+	var c [21]byte
+	c = getDate() //fecha
+	copy(mbr.Date[:], c[:])
+	//disk?signatura
+	mbr.DiskSignature = randomNum()
+
+	//part1
+	name := "Part1"
+	var nameParameter [16]byte
+	copy(nameParameter[:], name)
+	var inicio uint64
+	inicio = uint64(unsafe.Sizeof(mbr))
+	mbr.Part1 = mbrPartition('1', 'P', 'W', inicio, 20000, nameParameter)
+
+	//part2
+	inicio = inicio + 20000
+	name = "Part2"
+	copy(nameParameter[:], name)
+	mbr.Part2 = mbrPartition('1', 'P', 'W', inicio, 18000, nameParameter)
+
+	//part3
+	inicio = inicio + 18000
+	name = "Part3"
+	copy(nameParameter[:], name)
+	mbr.Part3 = mbrPartition('1', 'P', 'W', inicio, 100000, nameParameter)
+
+	//part4
+	inicio = inicio + 100000
+	name = "Part4"
+	copy(nameParameter[:], name)
+	mbr.Part4 = mbrPartition('1', 'E', 'W', inicio, 624000, nameParameter)
+	return mbr
+}
+
+func mbrPartition(status byte, tipo byte, fit byte, start uint64, size uint64, name [16]byte) partition {
+	partition := partition{}
+	partition.Status = status
+	partition.PartType = tipo
+	partition.Fit = fit
+	partition.Start = start
+	partition.Size = size
+	partition.Name = name
+	return partition
+}
+
+func readNextBytes(file *os.File, number int) []byte {
+	bytes := make([]byte, number)
+	_, err := file.Read(bytes)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return bytes
 }
 
 //line yacctab:1
@@ -530,44 +738,44 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:54
+//line parser.y:115
 		{
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:58
+//line parser.y:119
 		{
-			fmt.Println(yyDollar[2].node)
+			createDisk(size_, path_, name_, unit_)
 		}
 	case 4:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:59
+//line parser.y:120
 		{
 			fmt.Println(yyDollar[2].node)
 		}
 	case 7:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:68
+//line parser.y:129
 		{
-			yyVAL.node = Node(yyDollar[5].token)
+			size_ = yyDollar[5].token
 		}
 	case 8:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:69
+//line parser.y:130
 		{
-			yyVAL.node = Node(yyDollar[5].token)
+			path_ = yyDollar[5].token
 		}
 	case 9:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:70
+//line parser.y:131
 		{
-			yyVAL.node = Node(yyDollar[5].token)
+			name_ = yyDollar[5].token
 		}
 	case 10:
 		yyDollar = yyS[yypt-5 : yypt+1]
-//line parser.y:71
+//line parser.y:132
 		{
-			yyVAL.node = Node(yyDollar[5].token)
+			unit_ = yyDollar[5].token
 		}
 	}
 	goto yystack /* stack new state and value */

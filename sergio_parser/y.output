@@ -3,7 +3,7 @@ state 0
 	$accept: .Input $end 
 	Input: .    (1)
 
-	.  reduce 1 (src line 54)
+	.  reduce 1 (src line 115)
 
 	Input  goto 1
 
@@ -21,7 +21,7 @@ state 1
 state 2
 	Input:  Input Accion.    (2)
 
-	.  reduce 2 (src line 55)
+	.  reduce 2 (src line 116)
 
 
 state 3
@@ -47,14 +47,14 @@ state 5
 	Parameter:  Parameter.Atributos 
 
 	'-'  shift 7
-	.  reduce 3 (src line 58)
+	.  reduce 3 (src line 119)
 
 	Atributos  goto 9
 
 state 6
 	Parameter:  Atributos.    (6)
 
-	.  reduce 6 (src line 64)
+	.  reduce 6 (src line 125)
 
 
 state 7
@@ -75,14 +75,14 @@ state 8
 	Parameter:  Parameter.Atributos 
 
 	'-'  shift 7
-	.  reduce 4 (src line 59)
+	.  reduce 4 (src line 120)
 
 	Atributos  goto 9
 
 state 9
 	Parameter:  Parameter Atributos.    (5)
 
-	.  reduce 5 (src line 63)
+	.  reduce 5 (src line 124)
 
 
 state 10
@@ -172,25 +172,25 @@ state 21
 state 22
 	Atributos:  '-' SIZE '-' '>' DIGIT.    (7)
 
-	.  reduce 7 (src line 68)
+	.  reduce 7 (src line 129)
 
 
 state 23
 	Atributos:  '-' PATH '-' '>' DIR.    (8)
 
-	.  reduce 8 (src line 69)
+	.  reduce 8 (src line 130)
 
 
 state 24
 	Atributos:  '-' NAME '-' '>' ARCHIVO.    (9)
 
-	.  reduce 9 (src line 70)
+	.  reduce 9 (src line 131)
 
 
 state 25
 	Atributos:  '-' UNIT '-' '>' IDENT.    (10)
 
-	.  reduce 10 (src line 71)
+	.  reduce 10 (src line 132)
 
 
 21 terminals, 5 nonterminals
