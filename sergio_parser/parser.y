@@ -63,7 +63,7 @@ type mbr struct {
 	Part1 partition
 	Part2 partition
 	Part3 partition
-    Part4 partition
+  Part4 partition
 }
 
 var size_ string
@@ -289,10 +289,11 @@ func writeNextBytes(file *os.File, bytes []byte) {
 
 }
 
+
 func createMBR(x uint64) mbr{
 
 
-
+  
 	mbr:=mbr{}
 	mbr.Size = x //size disco
 	var c [21]byte
@@ -307,27 +308,29 @@ func createMBR(x uint64) mbr{
 	copy(nameParameter[:], name)
 	var inicio uint64
 	inicio=uint64(unsafe.Sizeof(mbr))
-	mbr.Part1 = mbrPartition('1', 'P','W', inicio, 20000, nameParameter)
-
-	//part2
-	inicio= inicio + 20000
+	mbr.Part1 = mbrPartition('0', 'P','W', inicio, inicio, nameParameter)//part2
 	name= "Part2"
 	copy(nameParameter[:], name)
-	mbr.Part2 = mbrPartition('1', 'P','W', inicio, 18000, nameParameter)
-
-	//part3
-	inicio= inicio + 18000
+	mbr.Part2 = mbrPartition('0', 'P','W', inicio, inicio, nameParameter)	//part3
 	name= "Part3"
 	copy(nameParameter[:], name)
-	mbr.Part3 = mbrPartition('1', 'P','W', inicio, 100000, nameParameter)
-
-	//part4	
-	inicio= inicio + 100000
-	name= "Part4"
+	mbr.Part3 = mbrPartition('0', 'P','W', inicio, inicio, nameParameter)	//part4	
+		name= "Part4"
 	copy(nameParameter[:], name)
-	mbr.Part4 = mbrPartition('1', 'E','W', inicio, 624000, nameParameter)
+	mbr.Part4 = mbrPartition('0', 'P','W', inicio, inicio, nameParameter)
  return mbr
 }
+
+func createPartition(){
+  //part1
+	//name := "Part1"
+	//var nameParameter [16]byte
+	//copy(nameParameter[:], name)
+	//var inicio uint64
+	//inicio=uint64(unsafe.Sizeof(mbr))
+	//mbr.Part1 = mbrPartition('0', 'P','W', inicio, 20000, nameParameter)
+}
+
 
 
 func mbrPartition(status byte, tipo byte, fit byte, start uint64,size uint64, name [16]byte)partition{
@@ -351,3 +354,13 @@ func readNextBytes(file *os.File, number int)[]byte{
 }
 
 
+func pausa_(){
+  fmt.Println("Estamos en Pausa ...")
+	bufio.NewReader(os.Stdin).ReadBytes('\n')
+}
+func eliminar_disco(path_ string){
+  err := os.Remove(path_)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
