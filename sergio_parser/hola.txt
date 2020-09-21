@@ -1,0 +1,4 @@
+Mkdisk -size->34 -path->/home/user/ -name->Disco1.dsk -uniT->k
+mkdisk -SiZe->8 -pAth->"/home/misdiscos/DISCOPrueba/" -namE->Disco_3.dsk
+Mkdisk -size->16 -path->"/home/misdiscos/" -NaMe->Disco4.dsk
+

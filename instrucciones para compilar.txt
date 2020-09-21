@@ -1,0 +1,7 @@
+// dentro de la carpeta sergio_parser compilar goyacc y lex de la siguiente manera
+//para lex escribir en una terminal
+golex scanner.l
+// para goyacc escribir
+goyacc parser.y
+//para correr el priyecto usar
+go run main.go

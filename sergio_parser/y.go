@@ -68,6 +68,7 @@ var size_ string
 var path_ string
 var name_ string
 var unit_ string
+var alerta = false
 
 func (n node) String() string {
 	buf := new(bytes.Buffer)
@@ -90,7 +91,7 @@ func Pruebas() string {
 	return s
 }
 
-//line parser.y:101
+//line parser.y:100
 type yySymType struct {
 	yys   int
 	node  node
@@ -113,6 +114,7 @@ const FDISK = 57358
 const NAME = 57359
 const DIGIT = 57360
 const UNIT = 57361
+const LINEA = 57362
 
 var yyToknames = [...]string{
 	"$end",
@@ -134,6 +136,7 @@ var yyToknames = [...]string{
 	"NAME",
 	"DIGIT",
 	"UNIT",
+	"LINEA",
 	"'-'",
 	"'>'",
 }
@@ -143,12 +146,13 @@ const yyEofCode = 1
 const yyErrCode = 2
 const yyInitialStackSize = 16
 
-//line parser.y:142
+//line parser.y:136
 
 func Execute() {
 	fi := bufio.NewReader(os.NewFile(0, "stdin"))
 	yyDebug = 0
 	yyErrorVerbose = true
+	aux := ""
 	for {
 		var eqn string
 		var ok bool
@@ -156,7 +160,17 @@ func Execute() {
 		fmt.Printf("Ingrese el comando: ")
 		if eqn, ok = readline(fi); ok {
 			l := newLexer(bytes.NewBufferString(eqn), os.Stdout, "file.name")
+			if alerta {
+
+				l = newLexer(bytes.NewBufferString(aux[:len(aux)-3]+eqn), os.Stdout, "file.name")
+				alerta = false
+			} else {
+				aux = eqn
+			}
+
+			//fmt.Println("\n cadena captada o leida despues:  ", eqn)
 			yyParse(l)
+
 		} else {
 			break
 		}
@@ -219,20 +233,20 @@ func getDate() [21]byte { //devuelvo en byte la fecha de una vez
 	return char
 }
 
+//Creo el Disco
 func createDisk(size_ string, path_ string, name_ string, unit_ string) {
+	crearDirectorioSiNoExiste(path_)
 
 	numero_size, error := strconv.Atoi(size_)
 	if error != nil {
 		fmt.Println("Error al convervir string a int ", error)
 	}
-
-	file, err := os.Create(name_)
+	file, err := os.Create(path_ + name_)
 	defer file.Close()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	x := int64(numero_size * 1024)
+	x := int64(numero_size * 1024 * 1024)
 	if unit_ == "k" {
 		x = int64(numero_size * 1024)
 	} else if unit_ == "m" {
@@ -260,7 +274,17 @@ func createDisk(size_ string, path_ string, name_ string, unit_ string) {
 	file.Seek(x, int(unsafe.Sizeof(mbr)))
 	binary.Write(&binario, binary.BigEndian, n)
 	writeNextBytes(file, binario.Bytes())
+}
 
+//Crear Carpeta
+func crearDirectorioSiNoExiste(directorio string) {
+	if _, err := os.Stat(directorio); os.IsNotExist(err) {
+		err = os.MkdirAll(directorio, os.ModePerm)
+		if err != nil {
+			// Aquí puedes manejar mejor el error, es un ejemplo
+			panic(err)
+		}
+	}
 }
 
 func writeNextBytes(file *os.File, bytes []byte) {
@@ -273,8 +297,9 @@ func writeNextBytes(file *os.File, bytes []byte) {
 
 }
 
+//Creo MBR
 func createMBR(x uint64) mbr {
-
+	//
 	mbr := mbr{}
 	mbr.Size = x //size disco
 	var c [21]byte
@@ -302,6 +327,7 @@ func createMBR(x uint64) mbr {
 	return mbr
 }
 
+//Creo particion
 func createPartition() {
 	//part1
 	//name := "Part1"
@@ -312,6 +338,7 @@ func createPartition() {
 	//mbr.Part1 = mbrPartition('0', 'P','W', inicio, 20000, nameParameter)
 }
 
+//
 func mbrPartition(status byte, tipo byte, fit byte, start uint64, size uint64, name [16]byte) partition {
 	partition := partition{}
 	partition.Status = status
@@ -331,16 +358,33 @@ func readNextBytes(file *os.File, number int) []byte {
 	}
 	return bytes
 }
-
 func pausa_() {
 	fmt.Println("Estamos en Pausa ...")
 	bufio.NewReader(os.Stdin).ReadBytes('\n')
 }
+
 func eliminar_disco(path_ string) {
 	err := os.Remove(path_)
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func cargar() {
+	archivo, error := os.Open("./hola.txt")
+
+	if error != nil {
+		fmt.Println("Hubo un error")
+	}
+	scanner := bufio.NewScanner(archivo)
+	var i int
+	for scanner.Scan() {
+		i++
+		linea := scanner.Text()
+		fmt.Println(i)
+		fmt.Println(linea)
+	}
+
 }
 
 //line yacctab:1
@@ -352,45 +396,45 @@ var yyExca = [...]int{
 
 const yyPrivate = 57344
 
-const yyLast = 27
+const yyLast = 30
 
 var yyAct = [...]int{
 
-	11, 21, 20, 19, 10, 18, 17, 16, 15, 12,
-	14, 13, 22, 7, 3, 24, 6, 23, 4, 25,
-	2, 5, 9, 1, 0, 9, 8,
+	24, 23, 22, 21, 9, 8, 14, 20, 19, 18,
+	13, 17, 25, 7, 5, 15, 27, 16, 3, 26,
+	12, 6, 4, 28, 12, 12, 10, 11, 2, 1,
 }
 var yyPact = [...]int{
 
-	-1000, 3, -1000, -7, -7, -7, -1000, -8, -7, -1000,
-	-10, -12, -13, -14, -16, -18, -19, -20, -6, 8,
-	5, 13, -1000, -1000, -1000, -1000,
+	-1000, 7, -1000, -16, -16, -16, -16, -1000, -2, -1000,
+	-16, -16, -1000, -10, -12, -13, -14, -19, -20, -21,
+	-22, -6, 10, 6, 17, -1000, -1000, -1000, -1000,
 }
 var yyPgo = [...]int{
 
-	0, 23, 20, 16, 21,
+	0, 29, 28, 13, 21,
 }
 var yyR1 = [...]int{
 
-	0, 1, 1, 2, 2, 4, 4, 3, 3, 3,
-	3,
+	0, 1, 1, 2, 2, 2, 4, 4, 3, 3,
+	3, 3, 3,
 }
 var yyR2 = [...]int{
 
-	0, 0, 2, 2, 2, 2, 1, 5, 5, 5,
-	5,
+	0, 0, 2, 2, 2, 2, 2, 1, 5, 5,
+	5, 5, 1,
 }
 var yyChk = [...]int{
 
-	-1000, -1, -2, 11, 15, -4, -3, 20, -4, -3,
-	12, 8, 17, 19, 20, 20, 20, 20, 21, 21,
-	21, 21, 18, 9, 10, 6,
+	-1000, -1, -2, 11, 15, 7, -4, -3, 21, 20,
+	-4, -4, -3, 12, 8, 17, 19, 21, 21, 21,
+	21, 22, 22, 22, 22, 18, 9, 10, 6,
 }
 var yyDef = [...]int{
 
-	1, -2, 2, 0, 0, 3, 6, 0, 4, 5,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 7, 8, 9, 10,
+	1, -2, 2, 0, 0, 0, 3, 7, 0, 12,
+	4, 5, 6, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 8, 9, 10, 11,
 }
 var yyTok1 = [...]int{
 
@@ -398,14 +442,14 @@ var yyTok1 = [...]int{
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 3, 3, 3, 20, 3, 3, 3, 3,
+	3, 3, 3, 3, 3, 21, 3, 3, 3, 3,
 	3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-	3, 3, 21,
+	3, 3, 22,
 }
 var yyTok2 = [...]int{
 
 	2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
-	12, 13, 14, 15, 16, 17, 18, 19,
+	12, 13, 14, 15, 16, 17, 18, 19, 20,
 }
 var yyTok3 = [...]int{
 	0,
@@ -750,44 +794,57 @@ yydefault:
 
 	case 1:
 		yyDollar = yyS[yypt-0 : yypt+1]
-//line parser.y:115
+//line parser.y:114
 		{
 		}
 	case 3:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:119
+//line parser.y:118
 		{
-			createDisk(size_, path_, name_, unit_)
+			fmt.Println(path_)
+			fmt.Println(name_)
 		}
 	case 4:
 		yyDollar = yyS[yypt-2 : yypt+1]
-//line parser.y:120
+//line parser.y:119
 		{
 			fmt.Println(yyDollar[2].node)
 		}
-	case 7:
+	case 5:
+		yyDollar = yyS[yypt-2 : yypt+1]
+//line parser.y:120
+		{
+			cargar()
+		}
+	case 8:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line parser.y:129
 		{
 			size_ = yyDollar[5].token
 		}
-	case 8:
+	case 9:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line parser.y:130
 		{
 			path_ = yyDollar[5].token
 		}
-	case 9:
+	case 10:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line parser.y:131
 		{
 			name_ = yyDollar[5].token
 		}
-	case 10:
+	case 11:
 		yyDollar = yyS[yypt-5 : yypt+1]
 //line parser.y:132
 		{
 			unit_ = yyDollar[5].token
+		}
+	case 12:
+		yyDollar = yyS[yypt-1 : yypt+1]
+//line parser.y:133
+		{
+			alerta = true
 		}
 	}
 	goto yystack /* stack new state and value */

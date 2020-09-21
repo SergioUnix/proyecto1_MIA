@@ -54,11 +54,12 @@ func (l *lexer) Lex(lval *yySymType) int {
 %yyc c
 %yyn c = l.Next()
 %yym l.Mark()
+dir           [/]{letter}+([/]{letter}*)*[/]{archivo}*|(\"[^"]*\")    
 digit         [0-9]+|{unicodeDigit}+ //AQUI VOS YA SABES COMO FUNCIONAN  son EXPRESIONES REGULARES LO DEMAS DE ARRIba QUEDA IGUAL XD 
-dir           ["]*[/]{letter}+([/]{letter}*)*[/]{archivo}*["]*     
 archivo       {letter}({letter}|{digit})*[.]{letter}+
 identifier    {letter}({letter}|{digit})*
 letter        [_a-zA-Z]|{unicodeLetter}
+linea          \\\*\n
 	
 unicodeDigit  \x81 //ESTO ES PORQUE GO TRABAJA CON UTF-8 POR ESO ES NECESARIO 
 unicodeLetter \x80
@@ -75,6 +76,7 @@ size lval.token = string(l.TokenBytes(nil)); return SIZE
 fdisk lval.token = string(l.TokenBytes(nil)); return FDISK
 name lval.token = string(l.TokenBytes(nil)); return NAME
 unit lval.token = string(l.TokenBytes(nil)); return UNIT
+{linea}  lval.token = string(l.TokenBytes(nil)); return LINEA 
 {archivo} lval.token = string(l.TokenBytes(nil)); return ARCHIVO
 int  lval.token = string(l.TokenBytes(nil)); return INT  //mira pues aqui es lo importante digamos ahi puse int al principio y es lo que tiene que reconocer si pongo digamos intt solo eso va hagarrar y el return sirve para devolver el token que definimos en el .y //{archivo} lval.token = string(l.TokenBytes(nil)); return ARCHIVO
 string lval.token = string(l.TokenBytes(nil)); return STRING
